@@ -7,7 +7,10 @@ public class BowlingTable
     public const int MaxSize = 10;
     public int Count { get; set; }
     public TableFrame Frame { get; set; }
+    public List<int?> Throws { get; set; } = new();
+    public List<int?> ScorePerFrame { get; set; } = new();
     public bool TableIsFull { get; set; }
+
     public BowlingTable()
     {
         TableIsFull = false;
@@ -24,6 +27,7 @@ public class BowlingTable
         {
             throw new ArgumentOutOfRangeException(nameof(pins), pins, "Have to be a number between 0 and 10.");
         }
+        Throws.Add(pins);
         Frame.Add(pins);
         Frame.CountScore();
     }
@@ -118,12 +122,22 @@ public class BowlingTable
             {
                 ThirdThrow = pins;
             }
+            // Game over check
             if (index == MaxSize &&
                 (ThirdThrow is not null ||
                 (SecondThrow is not null && strike is false && spare is false)))
             {
                 Table.TableIsFull = true;
             }
+        }
+
+        public void CountScore() => CountScore(ColumnScore);
+
+        private void CountScore(int? columnScore = null)
+        {
+            tempColumnScore ??= columnScore;
+            ColumnScore ??= AddScore();
+            Next?.CountScore(ColumnScore);
         }
 
         private Throw CheckThrow()
@@ -139,22 +153,17 @@ public class BowlingTable
             return Throw.NoMoreThrows;
         }
 
-        public void CountScore(int? columnScore = null)
-        {
-            tempColumnScore ??= columnScore;
-            ColumnScore ??= AddScore();
-            Next?.CountScore(ColumnScore);
-        }
-
         private int? AddScore()
         {
+            int? score = null;
+
             if (Table.TableIsFull == true && index == MaxSize)
             {
                 // Score for last column
-                return tempColumnScore + FirstThrow + SecondThrow + (ThirdThrow ?? 0);
+                score = tempColumnScore + FirstThrow + SecondThrow + (ThirdThrow ?? 0);
+                Table.ScorePerFrame.Add(score);
+                return score;
             }
-
-            int? score = null;
 
             if (Next is not null)
             {
@@ -170,11 +179,11 @@ public class BowlingTable
                 }
             }
             else if (strike is true || spare is true || SecondThrow is null) { return null; }
+            else { score = 0; }
 
             var columnScore = FirstThrow + (SecondThrow ?? 0);
-            score = score is null ? columnScore : score + columnScore;
-            score += tempColumnScore ?? 0;
-            tempColumnScore = score ?? tempColumnScore;
+            score += columnScore + (tempColumnScore ?? 0);
+            Table.ScorePerFrame.Add(score);
             return score;
         }
 

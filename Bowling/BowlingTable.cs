@@ -49,7 +49,7 @@ public class BowlingTable
             var thirdString = column.ThirdThrow == 10 ? "X" : column.ThirdThrow.ToString();
             sbThrows.Append($" {firstString} {secondString} {thirdString}|");
 
-            sbScore.Append($" {column.ColumnScore,3} |");
+            sbScore.Append($" {column.FrameScore,3} |");
 
             if (column.Next is null) { return; }
             WriteTable(column.Next);
@@ -76,9 +76,9 @@ public class BowlingTable
         private readonly int index = 0;
         private bool strike = false;
         private bool spare = false;
-        private int? tempColumnScore;
+        private int? tempFrameScore;
 
-        public int? ColumnScore { get; set; }
+        public int? FrameScore { get; set; }
         public int? FirstThrow { get; set; }
         public int? SecondThrow { get; set; }
         public int? ThirdThrow { get; set; }
@@ -131,13 +131,13 @@ public class BowlingTable
             }
         }
 
-        public void CountScore() => CountScore(ColumnScore);
+        public void CountScore() => CountScore(FrameScore);
 
         private void CountScore(int? columnScore = null)
         {
-            tempColumnScore ??= columnScore;
-            ColumnScore ??= AddScore();
-            Next?.CountScore(ColumnScore);
+            tempFrameScore ??= columnScore;
+            FrameScore ??= AddScore();
+            Next?.CountScore(FrameScore);
         }
 
         private Throw CheckThrow()
@@ -160,7 +160,7 @@ public class BowlingTable
             if (Table.TableIsFull == true && index == MaxSize)
             {
                 // Score for last column
-                score = tempColumnScore + FirstThrow + SecondThrow + (ThirdThrow ?? 0);
+                score = tempFrameScore + FirstThrow + SecondThrow + (ThirdThrow ?? 0);
                 Table.ScorePerFrame.Add(score);
                 return score;
             }
@@ -182,7 +182,7 @@ public class BowlingTable
             else { score = 0; }
 
             var columnScore = FirstThrow + (SecondThrow ?? 0);
-            score += columnScore + (tempColumnScore ?? 0);
+            score += columnScore + (tempFrameScore ?? 0);
             Table.ScorePerFrame.Add(score);
             return score;
         }

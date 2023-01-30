@@ -2,7 +2,7 @@ namespace Bowling;
 
 public class Game
 {
-    public Table Table { get; set; }
+    public BowlingTable Table { get; set; }
     public Game()
     {
         Table = new();

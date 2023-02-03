@@ -25,13 +25,14 @@ internal static class Scorer
     {
         int? score = 0;
 
+        // Score for the last column.
         if (table.TableIsFull == true && frame.Index + 1 == BowlingTable.MaxSize)
         {
             score = frame.FirstThrow + frame.SecondThrow + (frame.ThirdThrow ?? 0);
-            table.ScorePerFrame.Add(score);
             return score;
         }
 
+        // If strike or spare, add the future score if possible.
         if (frame.Next is not null)
         {
             if (frame.Strike is true)
@@ -46,7 +47,6 @@ internal static class Scorer
             }
         }
         else if (frame.Strike is true || frame.Spare is true || frame.SecondThrow is null) { return null; }
-        else { score = 0; }
 
         var columnScore = frame.FirstThrow + (frame.SecondThrow ?? 0);
         score += columnScore;
@@ -56,30 +56,21 @@ internal static class Scorer
     private static int? AddFutureScore(TableFrame frame, int throws)
     {
         int? score = null;
-        if (frame.Strike is true && throws > 1)
+        if (frame.Strike is true && throws == 2)
         {
             if (frame.Index + 1 == BowlingTable.MaxSize)
             {
                 score = frame.SecondThrow;
             }
-            else
+            else if (frame.Next is not null)
             {
-                if (frame.Next is not null)
-                {
-                    score = AddFutureScore(frame.Next, 1);
-                }
+                score = AddFutureScore(frame.Next, 1);
+                if (score is null) { return null; }
             }
 
-            if (score is null)
-            {
-                return null;
-            }
-            else
-            {
-                score += frame.FirstThrow;
-            }
+            score += frame.FirstThrow;
         }
-        else if (throws > 1)
+        else if (throws == 2)
         {
             if (frame.SecondThrow is null) { return null; }
             score = frame.FirstThrow + frame.SecondThrow;

@@ -18,6 +18,7 @@ internal class TableFrame
     public int? FirstThrow { get; set; }
     public int? SecondThrow { get; set; }
     public int? ThirdThrow { get; set; }
+    public int TotalFrameScore { get => (FirstThrow ?? 0) + (SecondThrow ?? 0) + (ThirdThrow ?? 0); }
     public TableFrame? Next { get; set; }
 
     public TableFrame(BowlingTable table)

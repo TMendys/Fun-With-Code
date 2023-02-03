@@ -28,7 +28,7 @@ internal static class Scorer
         // Score for the last column.
         if (table.TableIsFull == true && frame.Index + 1 == BowlingTable.MaxSize)
         {
-            score = frame.FirstThrow + frame.SecondThrow + (frame.ThirdThrow ?? 0);
+            score = frame.TotalFrameScore;
             return score;
         }
 
@@ -48,7 +48,7 @@ internal static class Scorer
         }
         else if (frame.Strike is true || frame.Spare is true || frame.SecondThrow is null) { return null; }
 
-        var columnScore = frame.FirstThrow + (frame.SecondThrow ?? 0);
+        var columnScore = frame.TotalFrameScore;
         score += columnScore;
         return score;
     }

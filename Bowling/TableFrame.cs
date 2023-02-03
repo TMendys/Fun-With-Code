@@ -1,6 +1,5 @@
 namespace Bowling.Table;
 
-
 internal class TableFrame
 {
     enum Throw
@@ -11,7 +10,7 @@ internal class TableFrame
         NoMoreThrows
     }
 
-    private readonly BowlingTable Table;
+    private readonly BowlingTable table;
 
     public bool Strike { get; set; }
     public bool Spare { get; set; }
@@ -23,9 +22,9 @@ internal class TableFrame
 
     public TableFrame(BowlingTable table)
     {
-        Table = table;
-        Table.Count++;
-        Index += Table.Count - 1;
+        this.table = table;
+        this.table.Count++;
+        Index += this.table.Count - 1;
     }
 
     protected TableFrame(int pins, BowlingTable table) : this(table)
@@ -43,7 +42,7 @@ internal class TableFrame
         }
         else if (@throw == Throw.NoMoreThrows)
         {
-            Next = new(pins, Table);
+            Next = new(pins, table);
         }
         else if (@throw == Throw.First)
         {
@@ -64,7 +63,7 @@ internal class TableFrame
             (ThirdThrow is not null ||
             (SecondThrow is not null && Strike is false && Spare is false)))
         {
-            Table.TableIsFull = true;
+            table.TableIsFull = true;
         }
     }
 

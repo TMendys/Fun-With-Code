@@ -1,15 +1,15 @@
 using System.Text;
 
-namespace Bowling;
+namespace Bowling.Table;
 
 public class BowlingTable
 {
     public const int MaxSize = 10;
-    public int Count { get; set; }
-    public TableFrame Frame { get; set; }
-    public List<int?> Throws { get; set; } = new();
-    public List<int?> ScorePerFrame { get; set; } = new();
-    public bool TableIsFull { get; set; }
+    public int Count { get; internal set; }
+    public bool TableIsFull { get; internal set; }
+    internal TableFrame Frame { get; private set; }
+    public List<int?> Throws { get; private set; } = new();
+    public List<int?> ScorePerFrame { get; private set; } = new();
 
     public BowlingTable()
     {
@@ -29,7 +29,7 @@ public class BowlingTable
         }
         Throws.Add(pins);
         Frame.Add(pins);
-        Frame.CountScore();
+        ScorePerFrame = Scorer.CountScore(this);
     }
 
     public override string ToString()
@@ -38,21 +38,21 @@ public class BowlingTable
         StringBuilder sbScore = new();
         WriteTable(Frame);
 
-        void WriteTable(TableFrame column)
+        void WriteTable(TableFrame frame)
         {
-            var firstString = column.FirstThrow == 10 ? "X" : column.FirstThrow.ToString();
-            var secondString = column.FirstThrow + column.SecondThrow == 10 ? "/" : column.SecondThrow?.ToString() ?? "_";
-            if (column.FirstThrow != 0 && column.SecondThrow == 10)
+            var firstString = frame.FirstThrow == 10 ? "X" : frame.FirstThrow.ToString();
+            var secondString = frame.FirstThrow + frame.SecondThrow == 10 ? "/" : frame.SecondThrow?.ToString() ?? "_";
+            if (frame.FirstThrow != 0 && frame.SecondThrow == 10)
             {
                 secondString = "X";
             }
-            var thirdString = column.ThirdThrow == 10 ? "X" : column.ThirdThrow.ToString();
+            var thirdString = frame.ThirdThrow == 10 ? "X" : frame.ThirdThrow.ToString();
             sbThrows.Append($" {firstString} {secondString} {thirdString}|");
 
-            sbScore.Append($" {column.FrameScore,3} |");
+            sbScore.Append($" {ScorePerFrame.ElementAtOrDefault(frame.Index),3} |");
 
-            if (column.Next is null) { return; }
-            WriteTable(column.Next);
+            if (frame.Next is null) { return; }
+            WriteTable(frame.Next);
         }
 
         var sThrows = sbThrows.ToString();
@@ -60,167 +60,5 @@ public class BowlingTable
 
         string result = sThrows[..^1] + Environment.NewLine + sScore[..^1];
         return result;
-    }
-
-    public class TableFrame
-    {
-        enum Throw
-        {
-            First,
-            Second,
-            Third,
-            NoMoreThrows
-        }
-
-        private readonly BowlingTable Table;
-        private readonly int index = 0;
-        private bool strike = false;
-        private bool spare = false;
-        private int? tempFrameScore;
-
-        public int? FrameScore { get; set; }
-        public int? FirstThrow { get; set; }
-        public int? SecondThrow { get; set; }
-        public int? ThirdThrow { get; set; }
-        public TableFrame? Next { get; set; }
-
-        public TableFrame(BowlingTable table)
-        {
-            Table = table;
-            Table.Count++;
-            index += Table.Count;
-        }
-
-        protected TableFrame(int score, BowlingTable table) : this(table)
-        {
-            Add(score);
-        }
-
-        public void Add(int pins)
-        {
-            Throw @throw = CheckThrow();
-
-            if (Next is not null)
-            {
-                Next.Add(pins);
-            }
-            else if (@throw == Throw.NoMoreThrows)
-            {
-                Next = new(pins, Table);
-            }
-            else if (@throw == Throw.First)
-            {
-                FirstThrow = pins;
-                strike = FirstThrow == 10;
-            }
-            else if (@throw == Throw.Second)
-            {
-                SecondThrow = pins;
-                spare = FirstThrow + SecondThrow == 10;
-            }
-            else if (@throw == Throw.Third)
-            {
-                ThirdThrow = pins;
-            }
-            // Game over check
-            if (index == MaxSize &&
-                (ThirdThrow is not null ||
-                (SecondThrow is not null && strike is false && spare is false)))
-            {
-                Table.TableIsFull = true;
-            }
-        }
-
-        public void CountScore() => CountScore(FrameScore);
-
-        private void CountScore(int? columnScore = null)
-        {
-            tempFrameScore ??= columnScore;
-            FrameScore ??= AddScore();
-            Next?.CountScore(FrameScore);
-        }
-
-        private Throw CheckThrow()
-        {
-            if (FirstThrow is null) return Throw.First;
-            if (SecondThrow is null && strike is false) return Throw.Second;
-            if (index == MaxSize)
-            {
-                if (SecondThrow is null && strike is true) return Throw.Second;
-                if (strike is true || spare is true) return Throw.Third;
-            }
-
-            return Throw.NoMoreThrows;
-        }
-
-        private int? AddScore()
-        {
-            int? score = null;
-
-            if (Table.TableIsFull == true && index == MaxSize)
-            {
-                // Score for last column
-                score = tempFrameScore + FirstThrow + SecondThrow + (ThirdThrow ?? 0);
-                Table.ScorePerFrame.Add(score);
-                return score;
-            }
-
-            if (Next is not null)
-            {
-                if (strike is true)
-                {
-                    score = Next.AddFutureScore(2);
-                    if (score is null) { return null; }
-                }
-                else if (spare is true)
-                {
-                    score = Next.AddFutureScore(1);
-                    if (score is null) { return null; }
-                }
-            }
-            else if (strike is true || spare is true || SecondThrow is null) { return null; }
-            else { score = 0; }
-
-            var columnScore = FirstThrow + (SecondThrow ?? 0);
-            score += columnScore + (tempFrameScore ?? 0);
-            Table.ScorePerFrame.Add(score);
-            return score;
-        }
-
-        protected int? AddFutureScore(int throws)
-        {
-            int? score;
-            if (strike is true && throws > 1)
-            {
-                if (index == MaxSize)
-                {
-                    score = SecondThrow;
-                }
-                else
-                {
-                    score = Next?.AddFutureScore(1);
-                }
-
-                if (score is null)
-                {
-                    return null;
-                }
-                else
-                {
-                    score += FirstThrow;
-                }
-            }
-            else if (throws > 1)
-            {
-                if (SecondThrow is null) { return null; }
-                score = FirstThrow + SecondThrow;
-            }
-            else
-            {
-                score = FirstThrow;
-            }
-
-            return score;
-        }
     }
 }

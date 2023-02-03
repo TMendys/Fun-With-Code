@@ -1,8 +1,11 @@
+using Bowling.Table;
+
 namespace Bowling;
 
 public class Game
 {
     public BowlingTable Table { get; set; }
+
     public Game()
     {
         Table = new();

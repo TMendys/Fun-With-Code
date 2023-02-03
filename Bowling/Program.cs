@@ -9,19 +9,19 @@ List<int> scores4 = new() { 10, 9, 1, 10, 9, 1, 9, 1, 10, 10, 9, 1, 9, 1, 10, 5,
 List<int> strikes = new() { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 }; // 300
 List<int> strikes2 = new() { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 9 }; // Too manny, 300
 
-foreach (var score in scores4)
+foreach (var score in scores)
 {
     game.AddScore(score);
 }
 
-//Console.WriteLine(game.WriteTable());
+Console.WriteLine(game.WriteTable());
 
-foreach (var item in game.Table.Throws)
-{
-    Console.Write(item + " ");
-}
-Console.WriteLine();
-foreach (var item in game.Table.ScorePerFrame)
-{
-    Console.Write(item + " ");
-}
+// foreach (var item in game.Table.Throws)
+// {
+//     Console.Write(item + " ");
+// }
+// Console.WriteLine();
+// foreach (var item in game.Table.ScorePerFrame)
+// {
+//     Console.Write(item + " ");
+// }
